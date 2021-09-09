@@ -175,6 +175,29 @@ describe('Test resource collection and distribution', () => {
   });
 
 
+  it('Case 2 of issue #143', () => {
+    const cell = game.map.getCell(5, 6);
+    const enoughWoods = rates.WOOD * 100;
+    game.map.addResource(5, 6, Resource.Types.WOOD, enoughWoods);
+    const cityTile = game.spawnCityTile(0, 5, 5);
+
+    const w1 = game.spawnWorker(0, 5, 5);
+    const w2 = game.spawnWorker(0, 5, 5);
+    w2.cargo.wood =
+      DEFAULT_CONFIGS.parameters.RESOURCE_CAPACITY.WORKER - 10; // `100-10=90` woods
+
+    game.distributeAllResources();
+
+    // Workers on CityTile does not collect resources
+    expect(w1.getCargoSpaceLeft()).to.equal(
+      DEFAULT_CONFIGS.parameters.RESOURCE_CAPACITY.WORKER
+    );
+    expect(w2.getCargoSpaceLeft()).to.equal(10);
+
+    // should take out rates.Wood
+    expect(game.cities.get(cityTile.cityid).fuel).to.equal(rates.WOOD);
+    expect(cell.resource.amount).to.equal(enoughWoods-rates.WOOD);
+  });
 
   it('should distribute resources to a CityTile with at least 1 unit on there ', () => {
     const cellN = game.map.getCell(4, 3);
